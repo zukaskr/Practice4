@@ -1,0 +1,33 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: db
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: moviedb
+    volumes:
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d moviedb"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  web-app:
+    build: .
+    container_name: web-app
+    ports:
+      - "8080:8080"
+    environment:
+      DB_HOST: db
+      DB_USER: user
+      DB_PASSWORD: password
+      DB_NAME: moviedb
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
